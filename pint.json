@@ -1,0 +1,20 @@
+{
+    "preset": "laravel",
+    "rules": {
+        "declare_strict_types": true,
+        "final_class": false,
+        "fully_qualified_strict_types": true,
+        "ordered_class_elements": {
+            "order": [
+                "use_trait",
+                "case",
+                "constant",
+                "property",
+                "construct",
+                "destruct",
+                "magic",
+                "method"
+            ]
+        }
+    }
+}

@@ -1,0 +1,70 @@
+{
+    "name": "publicala/laravel-ragno",
+    "description": "Laravel database driver for the Ragno SQL-over-HTTP protocol: read-only queries routed through an HTTP gateway, with Eloquent and the query builder untouched.",
+    "keywords": [
+        "laravel",
+        "database",
+        "driver",
+        "read-only",
+        "sql-over-http",
+        "ragno",
+        "eloquent",
+        "gateway"
+    ],
+    "homepage": "https://github.com/publicala/laravel-ragno",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "publica.la",
+            "homepage": "https://publica.la"
+        }
+    ],
+    "require": {
+        "php": "^8.4",
+        "ext-json": "*",
+        "illuminate/console": "^12.0|^13.0",
+        "illuminate/contracts": "^12.0|^13.0",
+        "illuminate/database": "^12.0|^13.0",
+        "illuminate/http": "^12.0|^13.0",
+        "illuminate/support": "^12.0|^13.0"
+    },
+    "require-dev": {
+        "larastan/larastan": "^3.0",
+        "laravel/pint": "^1.18",
+        "orchestra/testbench": "^10.0|^11.0",
+        "pestphp/pest": "^4.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "Publicala\\Ragno\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Publicala\\Ragno\\Tests\\": "tests/"
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Publicala\\Ragno\\RagnoServiceProvider"
+            ],
+            "aliases": {
+                "Ragno": "Publicala\\Ragno\\Facades\\Ragno"
+            }
+        }
+    },
+    "config": {
+        "sort-packages": true,
+        "allow-plugins": {
+            "pestphp/pest-plugin": true
+        }
+    },
+    "scripts": {
+        "test": "pest",
+        "lint": "pint",
+        "analyse": "phpstan analyse --memory-limit=512M"
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true
+}
