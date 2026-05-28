@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
+use Publicala\Ragno\Exceptions\RagnoConfigurationException;
 use Publicala\Ragno\Facades\Ragno;
 use Publicala\Ragno\RagnoConnection;
 use Publicala\Ragno\RagnoManager;
@@ -47,4 +48,48 @@ it('lets a per-connection base url override the shared default', function (): vo
 
 it('registers the Ragno facade', function (): void {
     expect(Ragno::getFacadeRoot())->toBeInstanceOf(RagnoManager::class);
+});
+
+it('rejects a service name that is not a URL slug', function (string $service): void {
+    config()->set('database.connections.bad', [
+        'driver' => 'ragno',
+        'ragno_service' => $service,
+        'ragno_token' => 'test-token',
+    ]);
+
+    DB::connection('bad');
+})->throws(RagnoConfigurationException::class, '[bad] is misconfigured')->with([
+    'path traversal' => '../escape',
+    'slash' => 'primary/extra',
+    'dot' => 'primary.staging',
+    'space' => 'primary staging',
+    'empty' => '',
+    'url-encoded slash' => 'primary%2Fextra',
+]);
+
+it('rejects a base URL that is not absolute http(s)', function (string $baseUrl): void {
+    config()->set('database.connections.bad', [
+        'driver' => 'ragno',
+        'ragno_service' => 'primary',
+        'ragno_token' => 'test-token',
+        'ragno_base_url' => $baseUrl,
+    ]);
+
+    DB::connection('bad');
+})->throws(RagnoConfigurationException::class, '[bad] is misconfigured')->with([
+    'file scheme' => 'file:///etc/passwd',
+    'ftp scheme' => 'ftp://example.test',
+    'relative path' => '/api/v1',
+    'not a URL' => 'not-a-url',
+    'empty' => '',
+]);
+
+it('accepts a service name with letters, numbers, hyphens, and underscores', function (): void {
+    config()->set('database.connections.ok', [
+        'driver' => 'ragno',
+        'ragno_service' => 'primary-staging_v2',
+        'ragno_token' => 'test-token',
+    ]);
+
+    expect(DB::connection('ok'))->toBeInstanceOf(RagnoConnection::class);
 });

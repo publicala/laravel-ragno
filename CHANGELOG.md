@@ -6,6 +6,27 @@ The top `## ` header is always the most recent version — `## vX.Y.Z`, exact �
 and that header is the source of truth the release workflow reads. Adding a
 new top block to this file is what cuts a release.
 
+## v0.3.0
+
+### Added
+
+- `RagnoConfigurationException` — thrown the first time a misconfigured
+  `driver=ragno` connection is resolved, before any HTTP request leaves the
+  app. Carries the connection name and the validator's reasons.
+- `RagnoServiceProvider` now validates each connection's `ragno_service` and
+  `ragno_base_url` via `Validator::make` (`alpha_dash:ascii` and
+  `url:http,https`). Both values land directly in the gateway request URL,
+  so rejecting non-slug services and non-http(s) base URLs at the config
+  seam is fast, legible defense-in-depth alongside the package's SELECT-only
+  GRANT (which remains the security boundary).
+
+### Notes
+
+- Pre-existing connections whose service name was not a URL slug (contained
+  `.`, `/`, whitespace, etc.) will now throw on resolve. The README and
+  existing fixtures already used slug-style names, so this should not
+  affect any well-formed configuration.
+
 ## v0.2.0
 
 ### Added

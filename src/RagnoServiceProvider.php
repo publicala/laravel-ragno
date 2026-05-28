@@ -9,8 +9,10 @@ use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Database\DatabaseManager;
 use Illuminate\Http\Client\Factory as HttpFactory;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\ServiceProvider;
 use Publicala\Ragno\Console\PingCommand;
+use Publicala\Ragno\Exceptions\RagnoConfigurationException;
 
 final class RagnoServiceProvider extends ServiceProvider
 {
@@ -52,10 +54,15 @@ final class RagnoServiceProvider extends ServiceProvider
         /** @var array<string, mixed> $shared */
         $shared = (array) $app->make(ConfigRepository::class)->get('ragno', []);
 
+        $baseUrl = (string) ($config['ragno_base_url'] ?? $shared['base_url'] ?? 'https://data.publica.la');
+        $service = (string) ($config['ragno_service'] ?? $name);
+
+        $this->validateConnectionConfig($name, $baseUrl, $service);
+
         $client = new RagnoClient(
             $this->httpFactory(),
-            (string) ($config['ragno_base_url'] ?? $shared['base_url'] ?? 'https://data.publica.la'),
-            (string) ($config['ragno_service'] ?? $name),
+            $baseUrl,
+            $service,
             (string) ($config['ragno_token'] ?? ''),
             (int) ($config['ragno_timeout'] ?? $shared['timeout'] ?? 30),
             (int) ($config['ragno_connect_timeout'] ?? $shared['connect_timeout'] ?? 10),
@@ -71,6 +78,29 @@ final class RagnoServiceProvider extends ServiceProvider
             (string) ($config['prefix'] ?? ''),
             $config,
         );
+    }
+
+    /**
+     * Reject a connection whose service name isn't a clean URL slug or whose
+     * base URL isn't an absolute http(s) URL — both go straight into the request
+     * URL ({@see RagnoClient}), so a bad value would silently reshape the path.
+     *
+     * The package-level GRANT remains the security boundary; this is a fast,
+     * legible fail at the config seam.
+     */
+    private function validateConnectionConfig(string $name, string $baseUrl, string $service): void
+    {
+        $validator = Validator::make(
+            ['ragno_service' => $service, 'ragno_base_url' => $baseUrl],
+            [
+                'ragno_service' => ['required', 'string', 'alpha_dash:ascii'],
+                'ragno_base_url' => ['required', 'string', 'url:http,https'],
+            ],
+        );
+
+        if ($validator->fails()) {
+            throw RagnoConfigurationException::invalid($name, $validator);
+        }
     }
 
     /**
