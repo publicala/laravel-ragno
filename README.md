@@ -52,9 +52,25 @@ over HTTP so you never reimplement it per project:
 
 ## Installation
 
-```bash
-composer require publicala/laravel-ragno
+This package is distributed via GitHub only — it is **not** published to
+Packagist. Add a VCS repository entry to your app's root `composer.json`,
+alongside `require`:
+
+```json
+"repositories": [
+    { "type": "vcs", "url": "https://github.com/publicala/laravel-ragno" }
+]
 ```
+
+Then:
+
+```bash
+composer require publicala/laravel-ragno:^0.4
+```
+
+The constraint pins the current minor on purpose — while the package is on
+0.x, every minor is potentially breaking under Composer's semver. Bump it
+when you upgrade.
 
 The service provider and the `Ragno` facade are auto-discovered. Publishing the
 config is optional — the connection config below is enough:
@@ -222,7 +238,8 @@ Ragno is a read-only query gateway, not a database connection. By design:
 If a project currently reaches the database with a direct `mysql` / `singlestore`
 connection, the switch is small and reversible:
 
-1. `composer require publicala/laravel-ragno`
+1. Install the package — see [Installation](#installation) for the VCS
+   repository entry plus `composer require publicala/laravel-ragno:^0.4`.
 2. Add the gateway keys to the connection and default its driver to `ragno`,
    keeping the old PDO keys as a fallback:
 
