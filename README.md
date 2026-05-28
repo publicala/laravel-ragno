@@ -62,15 +62,18 @@ alongside `require`:
 ]
 ```
 
-Then:
+Then — no version constraint needed:
 
 ```bash
-composer require publicala/laravel-ragno:^0.4
+composer require publicala/laravel-ragno
 ```
 
-The constraint pins the current minor on purpose — while the package is on
-0.x, every minor is potentially breaking under Composer's semver. Bump it
-when you upgrade.
+Composer reads the git tags off the VCS source and writes a semver-safe
+constraint into your `composer.json` for you (a `^0.x` caret while the
+package is on 0.x, then `^1.0` once it tags 1.0), so you always get the
+current release without pinning a number by hand. To move to a newer minor
+later, run `composer require publicala/laravel-ragno` again (or bump the
+caret it wrote).
 
 The service provider and the `Ragno` facade are auto-discovered. Publishing the
 config is optional — the connection config below is enough:
@@ -239,7 +242,7 @@ If a project currently reaches the database with a direct `mysql` / `singlestore
 connection, the switch is small and reversible:
 
 1. Install the package — see [Installation](#installation) for the VCS
-   repository entry plus `composer require publicala/laravel-ragno:^0.4`.
+   repository entry plus `composer require publicala/laravel-ragno`.
 2. Add the gateway keys to the connection and default its driver to `ragno`,
    keeping the old PDO keys as a fallback:
 
