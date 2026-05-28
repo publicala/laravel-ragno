@@ -29,7 +29,7 @@ it('refuses transaction operations', function (string $method, array $args): voi
     'beginTransaction' => ['beginTransaction', []],
     'commit' => ['commit', []],
     'rollBack' => ['rollBack', []],
-    'transaction' => ['transaction', [fn () => null]],
+    'transaction' => ['transaction', [fn (): null => null]],
 ]);
 
 it('rejects a write disguised as a read', function (): void {
@@ -70,5 +70,5 @@ it('can be disabled per connection (gateway still enforces server-side)', functi
     // (which would reject it) instead of failing locally — proving the toggle.
     DB::connection('unguarded')->select('delete from t');
 
-    Http::assertSent(fn ($request) => str_contains($request->url(), '/db/primary/query'));
+    Http::assertSent(fn ($request): bool => str_contains((string) $request->url(), '/db/primary/query'));
 });

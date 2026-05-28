@@ -2,10 +2,24 @@
 
 declare(strict_types=1);
 
+use Illuminate\Http\Client\Request;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Process;
+use Illuminate\Support\Sleep;
+use Illuminate\Support\Str;
 use Publicala\Ragno\Tests\TestCase;
 
-uses(TestCase::class)->in(__DIR__);
+pest()
+    ->extend(TestCase::class)
+    ->beforeEach(function (): void {
+        Str::createRandomStringsNormally();
+        Str::createUuidsNormally();
+        Http::preventStrayRequests();
+        Process::preventStrayProcesses();
+        Sleep::fake();
+        $this->freezeTime();
+    })
+    ->in(__DIR__);
 
 /**
  * Build a Ragno success envelope around the given rows.
@@ -29,7 +43,7 @@ function lastRagnoQuery(): string
 {
     $pair = Http::recorded()->last();
 
-    /** @var Illuminate\Http\Client\Request $request */
+    /** @var Request $request */
     $request = $pair[0];
 
     return (string) ($request->data()['query'] ?? '');

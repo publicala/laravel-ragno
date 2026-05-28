@@ -16,8 +16,8 @@ it('digs the request_id out of a wrapped QueryException', function (): void {
     $thrown = null;
     try {
         DB::connection('primary')->select('select nope from tenants');
-    } catch (QueryException $e) {
-        $thrown = $e;
+    } catch (QueryException $queryException) {
+        $thrown = $queryException;
     }
 
     // Laravel wraps our RagnoQueryException in a QueryException...

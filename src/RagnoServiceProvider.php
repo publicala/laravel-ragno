@@ -18,11 +18,9 @@ final class RagnoServiceProvider extends ServiceProvider
     {
         $this->mergeConfigFrom(__DIR__.'/../config/ragno.php', 'ragno');
 
-        $this->app->singleton('ragno', function (Application $app): RagnoManager {
-            return new RagnoManager(
-                (string) $app->make(ConfigRepository::class)->get('ragno.base_url', 'https://data.publica.la'),
-            );
-        });
+        $this->app->singleton('ragno', fn (Application $app): RagnoManager => new RagnoManager(
+            (string) $app->make(ConfigRepository::class)->get('ragno.base_url', 'https://data.publica.la'),
+        ));
 
         // Register the read-only `ragno` database driver. A connection in
         // config/database.php with driver=ragno routes its reads through the

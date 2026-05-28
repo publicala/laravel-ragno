@@ -36,8 +36,8 @@ it('maps an error envelope to a RagnoQueryException with code, request_id and st
     $thrown = null;
     try {
         ragnoClient($http)->query('selct 1');
-    } catch (RagnoQueryException $e) {
-        $thrown = $e;
+    } catch (RagnoQueryException $ragnoQueryException) {
+        $thrown = $ragnoQueryException;
     }
 
     expect($thrown)->not->toBeNull()
@@ -54,8 +54,8 @@ it('wraps a transport failure as transport_error, preserving the previous except
     $thrown = null;
     try {
         ragnoClient($http)->query('select 1');
-    } catch (RagnoQueryException $e) {
-        $thrown = $e;
+    } catch (RagnoQueryException $ragnoQueryException) {
+        $thrown = $ragnoQueryException;
     }
 
     expect($thrown)->not->toBeNull()
@@ -70,8 +70,8 @@ it('falls back to the X-Request-Id header when the body lacks request_id', funct
     $thrown = null;
     try {
         ragnoClient($http)->query('select 1');
-    } catch (RagnoQueryException $e) {
-        $thrown = $e;
+    } catch (RagnoQueryException $ragnoQueryException) {
+        $thrown = $ragnoQueryException;
     }
 
     expect($thrown)->not->toBeNull()
@@ -82,3 +82,21 @@ it('falls back to the X-Request-Id header when the body lacks request_id', funct
 it('fails fast when no token is configured', function (): void {
     ragnoClient(new Factory, token: '')->query('select 1');
 })->throws(RagnoQueryException::class, 'No Ragno token');
+
+it('returns an empty list when the envelope data is not an array', function (): void {
+    $http = new Factory;
+    $http->fake(['*' => $http->response(['request_id' => 'r', 'service' => 'primary', 'data' => 'oops'])]);
+
+    expect(ragnoClient($http)->query('select 1'))->toBe([]);
+});
+
+it('coerces non-array rows into empty stdClass objects', function (): void {
+    $http = new Factory;
+    $http->fake(['*' => $http->response(['request_id' => 'r', 'service' => 'primary', 'data' => ['x', 'y']])]);
+
+    $rows = ragnoClient($http)->query('select 1');
+
+    expect($rows)->toHaveCount(2)
+        ->and($rows[0])->toBeInstanceOf(stdClass::class)
+        ->and((array) $rows[0])->toBe([]);
+});

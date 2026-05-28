@@ -28,7 +28,8 @@ jobs:
         uses: shivammathur/setup-php@v2
         with:
           php-version: ${{ matrix.php }}
-          coverage: none
+          coverage: pcov
+          tools: composer:v2
 
       - name: Install dependencies
         run: |
@@ -37,11 +38,14 @@ jobs:
             "orchestra/testbench:${{ matrix.testbench }}"
           composer update --no-interaction --prefer-dist
 
-      - name: Pint
-        run: vendor/bin/pint --test
+      - name: Pint + Rector (check only)
+        run: composer run-script test:lint
 
-      - name: PHPStan
-        run: vendor/bin/phpstan analyse --no-progress --memory-limit=512M
+      - name: PHPStan (level 8)
+        run: composer run-script test:types
 
-      - name: Pest
-        run: vendor/bin/pest
+      - name: Type coverage (100%)
+        run: composer run-script test:type-coverage
+
+      - name: Code coverage (100%)
+        run: composer run-script test:coverage

@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace Publicala\Ragno;
 
+use Closure;
 use Generator;
 use Illuminate\Database\Connection;
-use Illuminate\Database\Query\Grammars\Grammar as QueryGrammar;
 use Illuminate\Database\Query\Grammars\MySqlGrammar;
 use Illuminate\Database\Query\Processors\MySqlProcessor;
-use Illuminate\Database\Query\Processors\Processor;
+use PDO;
 use Publicala\Ragno\Exceptions\RagnoQueryException;
 use Publicala\Ragno\Exceptions\ReadOnlyViolationException;
 use Publicala\Ragno\Query\ReadOnlyStatementGuard;
@@ -49,7 +49,7 @@ final class RagnoConnection extends Connection
         // reconnectIfMissingConnection() never attempts a (re)connect, and
         // getPdo()/getReadPdo() below make any real use loud.
         parent::__construct(
-            fn (): \PDO => throw new RuntimeException('RagnoConnection has no PDO; all reads go through the HTTP gateway.'),
+            fn (): PDO => throw new RuntimeException('RagnoConnection has no PDO; all reads go through the HTTP gateway.'),
             $database,
             $tablePrefix,
             $config,
@@ -57,16 +57,6 @@ final class RagnoConnection extends Connection
 
         $this->enforceReadOnly = (bool) ($config['enforce_read_only'] ?? true);
         $this->maxRows = isset($config['max_rows']) ? (int) $config['max_rows'] : null;
-    }
-
-    protected function getDefaultQueryGrammar(): QueryGrammar
-    {
-        return new MySqlGrammar($this);
-    }
-
-    protected function getDefaultPostProcessor(): Processor
-    {
-        return new MySqlProcessor;
     }
 
     /**
@@ -83,7 +73,7 @@ final class RagnoConnection extends Connection
      * @param  array<string, mixed>  $fetchUsing
      * @return array<int, stdClass>
      */
-    public function select($query, $bindings = [], $useReadPdo = true, array $fetchUsing = [])
+    public function select($query, $bindings = [], $useReadPdo = true, array $fetchUsing = []): array
     {
         // Guard before run() so a misuse surfaces as ReadOnlyViolationException
         // rather than being wrapped in a QueryException by runQueryCallback().
@@ -121,26 +111,11 @@ final class RagnoConnection extends Connection
      * @param  array<string, mixed>  $fetchUsing
      * @return Generator<int, stdClass>
      */
-    public function cursor($query, $bindings = [], $useReadPdo = true, array $fetchUsing = [])
+    public function cursor($query, $bindings = [], $useReadPdo = true, array $fetchUsing = []): Generator
     {
         foreach ($this->select($query, $bindings, $useReadPdo) as $row) {
             yield $row;
         }
-    }
-
-    /**
-     * Inline prepared-statement bindings into raw SQL. Ragno accepts no
-     * bindings, so the grammar quotes/escapes each value into the statement
-     * (ints stay numeric; strings/dates are single-quoted and escaped).
-     *
-     * @param  array<int|string, mixed>  $bindings
-     */
-    private function inlineBindings(string $query, array $bindings): string
-    {
-        return $this->getQueryGrammar()->substituteBindingsIntoRawSql(
-            $query,
-            $this->prepareBindings($bindings),
-        );
     }
 
     /**
@@ -200,7 +175,7 @@ final class RagnoConnection extends Connection
     }
 
     /** {@inheritDoc} */
-    public function transaction(\Closure $callback, $attempts = 1): never
+    public function transaction(Closure $callback, $attempts = 1): never
     {
         throw ReadOnlyViolationException::transaction('transaction');
     }
@@ -221,6 +196,16 @@ final class RagnoConnection extends Connection
     public function rollBack($toLevel = null): never
     {
         throw ReadOnlyViolationException::transaction('rollBack');
+    }
+
+    protected function getDefaultQueryGrammar(): MySqlGrammar
+    {
+        return new MySqlGrammar($this);
+    }
+
+    protected function getDefaultPostProcessor(): MySqlProcessor
+    {
+        return new MySqlProcessor;
     }
 
     /**
@@ -252,15 +237,18 @@ final class RagnoConnection extends Connection
         throw new RuntimeException('Binary values cannot be embedded in a Ragno query.');
     }
 
-    /** There is no PDO behind a Ragno connection. */
-    public function getPdo(): never
+    /**
+     * Inline prepared-statement bindings into raw SQL. Ragno accepts no
+     * bindings, so the grammar quotes/escapes each value into the statement
+     * (ints stay numeric; strings/dates are single-quoted and escaped).
+     *
+     * @param  array<int|string, mixed>  $bindings
+     */
+    private function inlineBindings(string $query, array $bindings): string
     {
-        throw new RuntimeException('RagnoConnection has no PDO; all reads go through the HTTP gateway.');
-    }
-
-    /** There is no PDO behind a Ragno connection. */
-    public function getReadPdo(): never
-    {
-        throw new RuntimeException('RagnoConnection has no PDO; all reads go through the HTTP gateway.');
+        return $this->getQueryGrammar()->substituteBindingsIntoRawSql(
+            $query,
+            $this->prepareBindings($bindings),
+        );
     }
 }

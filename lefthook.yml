@@ -1,0 +1,31 @@
+min_version: 1.12.2
+
+output:
+  - summary
+  - failure
+  - execution_out
+
+pre-commit:
+  parallel: true
+  commands:
+    "fix:rector":
+      priority: 1
+      run: ./vendor/bin/rector process --no-progress-bar {staged_files}
+      glob: "*.php"
+      stage_fixed: true
+    "fix:php":
+      priority: 2
+      run: ./vendor/bin/pint {staged_files}
+      glob: "*.php"
+      stage_fixed: true
+
+pre-push:
+  parallel: true
+  commands:
+    "analyze:php":
+      run: ./vendor/bin/phpstan analyse --memory-limit=512M
+      glob: "{src,config}/**/*.php"
+    "test:type-coverage":
+      run: ./vendor/bin/pest --type-coverage --min=100
+    "test:unit":
+      run: ./vendor/bin/pest

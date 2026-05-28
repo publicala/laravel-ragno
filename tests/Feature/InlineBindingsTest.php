@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 
@@ -43,7 +43,7 @@ it('inlines booleans and nulls', function (): void {
 it('inlines a date binding using the connection date format', function (): void {
     DB::connection('primary')
         ->table('u')
-        ->where('created_at', '>', Carbon::parse('2026-01-02 03:04:05'))
+        ->where('created_at', '>', Date::parse('2026-01-02 03:04:05'))
         ->get();
 
     expect(lastRagnoQuery())->toContain("`created_at` > '2026-01-02 03:04:05'");

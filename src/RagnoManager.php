@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Publicala\Ragno;
 
 use Closure;
+use Illuminate\Http\Client\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Http;
 use Publicala\Ragno\Exceptions\RagnoQueryException;
@@ -20,10 +21,10 @@ use Throwable;
  * they operate on the same facade root the driver's client uses, so a fake set
  * here is guaranteed to apply to queries.
  */
-final class RagnoManager
+final readonly class RagnoManager
 {
     public function __construct(
-        private readonly string $baseUrl = 'https://data.publica.la',
+        private string $baseUrl = 'https://data.publica.la',
     ) {}
 
     /**
@@ -63,12 +64,12 @@ final class RagnoManager
     {
         $needle = $this->pathFor($service);
 
-        Http::assertSent(function ($request) use ($needle, $callback): bool {
-            if (! str_contains($request->url(), $needle)) {
+        Http::assertSent(function (Request $request) use ($needle, $callback): bool {
+            if (! str_contains((string) $request->url(), $needle)) {
                 return false;
             }
 
-            if ($callback === null) {
+            if (! $callback instanceof Closure) {
                 return true;
             }
 
@@ -85,7 +86,7 @@ final class RagnoManager
     {
         $needle = $service === null ? '/api/v1/db/' : $this->pathFor($service);
 
-        Http::assertNotSent(fn ($request): bool => str_contains($request->url(), $needle));
+        Http::assertNotSent(fn (Request $request): bool => str_contains((string) $request->url(), $needle));
     }
 
     /**
@@ -98,7 +99,7 @@ final class RagnoManager
     {
         $needle = $service === null ? '/api/v1/db/' : $this->pathFor($service);
 
-        return Http::recorded(fn ($request): bool => str_contains($request->url(), $needle));
+        return Http::recorded(fn (Request $request): bool => str_contains((string) $request->url(), $needle));
     }
 
     /**
@@ -117,7 +118,7 @@ final class RagnoManager
      */
     public function exceptionFrom(Throwable $e): ?RagnoQueryException
     {
-        for ($current = $e; $current !== null; $current = $current->getPrevious()) {
+        for ($current = $e; $current instanceof Throwable; $current = $current->getPrevious()) {
             if ($current instanceof RagnoQueryException) {
                 return $current;
             }
@@ -142,7 +143,7 @@ final class RagnoManager
 
     private function urlFor(string $service): string
     {
-        return rtrim($this->baseUrl, '/').$this->pathFor($service);
+        return mb_rtrim($this->baseUrl, '/').$this->pathFor($service);
     }
 
     private function pathFor(string $service): string
