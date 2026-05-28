@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Publicala\Ragno\Facades\Ragno;
 use Publicala\Ragno\RagnoConnection;
+use Publicala\Ragno\RagnoManager;
 
 it('merges the package config defaults', function (): void {
     expect(config('ragno.base_url'))->toBe('https://data.publica.la')
@@ -41,9 +42,9 @@ it('lets a per-connection base url override the shared default', function (): vo
 
     DB::connection('staging')->select('select 1');
 
-    Http::assertSent(fn ($request) => $request->url() === 'https://staging.example.test/api/v1/db/primary_staging/query');
+    Http::assertSent(fn ($request): bool => $request->url() === 'https://staging.example.test/api/v1/db/primary_staging/query');
 });
 
 it('registers the Ragno facade', function (): void {
-    expect(Ragno::getFacadeRoot())->toBeInstanceOf(Publicala\Ragno\RagnoManager::class);
+    expect(Ragno::getFacadeRoot())->toBeInstanceOf(RagnoManager::class);
 });

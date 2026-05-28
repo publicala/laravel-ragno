@@ -20,4 +20,11 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - `Ragno` facade with `fake()` / `assertQueried()` / `assertNothingQueried()` /
   `recorded()` test helpers and `requestId()` / `exceptionFrom()` accessors.
 - `ragno:ping` artisan command to verify connectivity and tokens.
-- Tested on Laravel 12 and 13; PHPStan level 8; Pint (Laravel preset).
+- Full Publica.la quality stack: Pint (Laravel preset + strict rules), Rector
+  (Laravel + prepared sets), PHPStan level 8 with Larastan, Lefthook
+  (pre-commit Rector+Pint, pre-push PHPStan + type-coverage + tests),
+  CI matrix across Laravel 12 and 13.
+- Architecture tests (`tests/Arch/`): strict types enforced in source and
+  namespaced support; every source class final; no `dd` / `dump` / `var_dump`
+  / `Log::debug` in source; exceptions implement `Throwable`.
+- Quality gates: **100% type coverage**, **100% line coverage**.

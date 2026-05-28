@@ -15,11 +15,17 @@ use Publicala\Ragno\Exceptions\ReadOnlyViolationException;
  * NOT as the security boundary. The boundary is the SQL GRANT behind the Ragno
  * token (SELECT-only) plus the gateway's own read-only guard. Bindings are
  * still placeholders at this point, so they never affect the verdict.
+ *
+ * The scanner works on bytes (`$sql[$i]` / `isset()`), which is correct for
+ * UTF-8: every byte we branch on is ASCII, and UTF-8 multi-byte sequences never
+ * contain bytes that collide with SQL syntax. It avoids `strlen()`/`substr()`
+ * on purpose so it stays byte-accurate regardless of the active string-function
+ * mode.
  */
 final class ReadOnlyStatementGuard
 {
     /** @var list<string> */
-    private const ALLOWED = ['select', 'with', 'show', 'describe', 'desc', 'explain'];
+    private const array ALLOWED = ['select', 'with', 'show', 'describe', 'desc', 'explain'];
 
     /**
      * @throws ReadOnlyViolationException
@@ -50,16 +56,15 @@ final class ReadOnlyStatementGuard
      */
     public static function firstKeyword(string $sql): string
     {
-        $length = strlen($sql);
-        $i = self::skipInsignificant($sql, 0, $length, skipParens: true);
+        $i = self::skipInsignificant($sql, 0, skipParens: true);
 
         $keyword = '';
-        while ($i < $length && ctype_alpha($sql[$i])) {
+        while (isset($sql[$i]) && ctype_alpha($sql[$i])) {
             $keyword .= $sql[$i];
             $i++;
         }
 
-        return strtolower($keyword);
+        return mb_strtolower($keyword);
     }
 
     /**
@@ -70,28 +75,25 @@ final class ReadOnlyStatementGuard
      */
     private static function hasTrailingStatement(string $sql): bool
     {
-        $length = strlen($sql);
         $i = 0;
 
-        while ($i < $length) {
+        while (isset($sql[$i])) {
             $char = $sql[$i];
 
-            if ($char === "'" || $char === '"' || $char === '`') {
-                $i = self::skipQuoted($sql, $i, $length);
+            if (in_array($char, ["'", '"', '`'], true)) {
+                $i = self::skipQuoted($sql, $i);
 
                 continue;
             }
 
             if (self::isCommentStart($sql, $i)) {
-                $i = self::skipComment($sql, $i, $length);
+                $i = self::skipComment($sql, $i);
 
                 continue;
             }
 
             if ($char === ';') {
-                $next = self::skipInsignificant($sql, $i + 1, $length, skipParens: false);
-
-                return $next < $length;
+                return isset($sql[self::skipInsignificant($sql, $i + 1, skipParens: false)]);
             }
 
             $i++;
@@ -104,9 +106,9 @@ final class ReadOnlyStatementGuard
      * Advance past whitespace and comments (and, optionally, opening parens),
      * returning the index of the next significant character.
      */
-    private static function skipInsignificant(string $sql, int $i, int $length, bool $skipParens): int
+    private static function skipInsignificant(string $sql, int $i, bool $skipParens): int
     {
-        while ($i < $length) {
+        while (isset($sql[$i])) {
             $char = $sql[$i];
 
             if (ctype_space($char) || ($skipParens && $char === '(')) {
@@ -116,7 +118,7 @@ final class ReadOnlyStatementGuard
             }
 
             if (self::isCommentStart($sql, $i)) {
-                $i = self::skipComment($sql, $i, $length);
+                $i = self::skipComment($sql, $i);
 
                 continue;
             }
@@ -129,7 +131,7 @@ final class ReadOnlyStatementGuard
 
     private static function isCommentStart(string $sql, int $i): bool
     {
-        $char = $sql[$i];
+        $char = $sql[$i] ?? '';
         $next = $sql[$i + 1] ?? '';
 
         return ($char === '-' && $next === '-')
@@ -137,31 +139,31 @@ final class ReadOnlyStatementGuard
             || ($char === '/' && $next === '*');
     }
 
-    private static function skipComment(string $sql, int $i, int $length): int
+    private static function skipComment(string $sql, int $i): int
     {
         if ($sql[$i] === '/') {
             $i += 2;
-            while ($i < $length && ! ($sql[$i] === '*' && ($sql[$i + 1] ?? '') === '/')) {
+            while (isset($sql[$i]) && ! ($sql[$i] === '*' && ($sql[$i + 1] ?? '') === '/')) {
                 $i++;
             }
 
-            return min($i + 2, $length);
+            return isset($sql[$i]) ? $i + 2 : $i;
         }
 
         // Line comment: -- or #
-        while ($i < $length && $sql[$i] !== "\n") {
+        while (isset($sql[$i]) && $sql[$i] !== "\n") {
             $i++;
         }
 
         return $i;
     }
 
-    private static function skipQuoted(string $sql, int $i, int $length): int
+    private static function skipQuoted(string $sql, int $i): int
     {
         $quote = $sql[$i];
         $i++;
 
-        while ($i < $length) {
+        while (isset($sql[$i])) {
             $char = $sql[$i];
 
             // Backslash escapes apply inside '...' and "..." (MySQL/SingleStore
@@ -186,6 +188,6 @@ final class ReadOnlyStatementGuard
             $i++;
         }
 
-        return $length;
+        return $i;
     }
 }

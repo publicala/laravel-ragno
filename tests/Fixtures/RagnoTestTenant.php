@@ -15,11 +15,11 @@ use Illuminate\Database\Eloquent\Model;
  */
 final class RagnoTestTenant extends Model
 {
+    public $timestamps = false;
+
     protected $connection = 'primary';
 
     protected $table = 'tenants';
-
-    public $timestamps = false;
 
     protected $guarded = [];
 

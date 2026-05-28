@@ -29,6 +29,9 @@ it('passes read statements', function (string $sql): void {
     'select 1;',
     "select ';' as x",
     "select 'a;b' as x; ",
+    "select 'a\\'b' as x",  // backslash-escaped quote inside a string literal
+    "select 'a''b' as x",    // doubled single quote (SQL-style escape)
+    "select 'unterminated",  // unterminated string literal — must not crash
 ]);
 
 it('rejects writes and statement chaining', function (string $sql): void {
@@ -49,3 +52,7 @@ it('throws a descriptive ReadOnlyViolationException on a write', function (): vo
 it('throws on multiple statements', function (): void {
     ReadOnlyStatementGuard::assert('select 1; select 2');
 })->throws(ReadOnlyViolationException::class, 'multiple statements');
+
+it('reports an empty statement clearly', function (): void {
+    ReadOnlyStatementGuard::assert('   ');
+})->throws(ReadOnlyViolationException::class, '(empty)');

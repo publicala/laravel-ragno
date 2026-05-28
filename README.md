@@ -267,6 +267,36 @@ r = requests.post(
 rows = r.json()["data"]   # numerics are strings
 ```
 
+## Quality
+
+This package ships with the Publica.la quality stack and **100% type and code
+coverage** as non-negotiable gates:
+
+| Tool | Config | What it does |
+|------|--------|--------------|
+| Pint | `pint.json` | Laravel preset + strict rules (strict types, immutable dates, ordered class elements, …) |
+| Rector | `rector.php` | Laravel sets + prepared sets (dead code, code quality, coding style, type declarations, privatization, early return) |
+| PHPStan | `phpstan.neon` | Level 8 with Larastan |
+| Pest | `tests/` | `it()` syntax, arch rules in `tests/Arch/`, type coverage and line coverage both at 100% |
+| Lefthook | `lefthook.yml` | Pre-commit: Rector + Pint. Pre-push: PHPStan + type coverage + tests. |
+
+Run everything:
+
+```bash
+composer install
+lefthook install                # one-time, sets up the git hooks
+composer test                   # full gate
+```
+
+Code coverage (`composer test:coverage` and `composer test`) needs a coverage
+driver. CI installs PCOV. Locally on Herd:
+
+```bash
+php -d zend_extension="/Applications/Herd.app/Contents/Resources/xdebug/xdebug-84-arm64.so" \
+    -d xdebug.mode=coverage \
+    vendor/bin/pest --coverage --min=100
+```
+
 ## License
 
 MIT. See [LICENSE](LICENSE).

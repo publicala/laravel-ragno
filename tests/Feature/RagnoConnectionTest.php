@@ -106,6 +106,18 @@ it('sends the bearer token and JSON content type', function (): void {
 
     DB::connection('primary')->select('select 1');
 
-    Http::assertSent(fn ($request) => $request->hasHeader('Authorization', 'Bearer test-token')
+    Http::assertSent(fn ($request): bool => $request->hasHeader('Authorization', 'Bearer test-token')
         && $request->hasHeader('Accept', 'application/json'));
 });
+
+it('has no PDO behind the connection', function (): void {
+    DB::connection('primary')->getPdo();
+})->throws(RuntimeException::class, 'no PDO');
+
+it('has no read PDO behind the connection', function (): void {
+    DB::connection('primary')->getReadPdo();
+})->throws(RuntimeException::class, 'no PDO');
+
+it('refuses to embed binary values', function (): void {
+    DB::connection('primary')->escape("\x00\x01", binary: true);
+})->throws(RuntimeException::class, 'Binary');

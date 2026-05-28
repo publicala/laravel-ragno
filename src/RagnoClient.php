@@ -26,16 +26,16 @@ use Throwable;
  * Uses Laravel's HTTP factory, so consumers can {@see \Illuminate\Support\Facades\Http::fake()}
  * the gateway in tests (or use {@see Facades\Ragno::fake()}).
  */
-final class RagnoClient
+final readonly class RagnoClient
 {
     public function __construct(
-        private readonly HttpFactory $http,
-        private readonly string $baseUrl,
-        private readonly string $service,
-        private readonly string $token,
-        private readonly int $timeout = 30,
-        private readonly int $connectTimeout = 10,
-        private readonly string $userAgent = 'laravel-ragno',
+        private HttpFactory $http,
+        private string $baseUrl,
+        private string $service,
+        private string $token,
+        private int $timeout = 30,
+        private int $connectTimeout = 10,
+        private string $userAgent = 'laravel-ragno',
     ) {}
 
     /**
@@ -50,20 +50,20 @@ final class RagnoClient
         if ($this->token === '') {
             throw new RagnoQueryException(
                 "No Ragno token configured for service [{$this->service}]. ".
-                'Set the connection\'s `ragno_token` (e.g. RAGNO_'.strtoupper($this->service).'_TOKEN).',
+                "Set the connection's `ragno_token` (e.g. RAGNO_".mb_strtoupper($this->service).'_TOKEN).',
                 errorCode: 'missing_token',
             );
         }
 
-        $url = rtrim($this->baseUrl, '/').'/api/v1/db/'.$this->service.'/query';
+        $url = mb_rtrim($this->baseUrl, '/').'/api/v1/db/'.$this->service.'/query';
 
         try {
             $response = $this->request()->post($url, ['query' => $sql]);
-        } catch (Throwable $e) {
+        } catch (Throwable $throwable) {
             throw new RagnoQueryException(
-                "Ragno request to service [{$this->service}] failed: ".$e->getMessage(),
+                "Ragno request to service [{$this->service}] failed: ".$throwable->getMessage(),
                 errorCode: 'transport_error',
-                previous: $e,
+                previous: $throwable,
             );
         }
 
