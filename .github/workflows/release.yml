@@ -43,7 +43,7 @@ jobs:
     name: Validate changelog header
     runs-on: depot-ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Check top header shape
         run: |
@@ -64,7 +64,7 @@ jobs:
     if: github.event_name == 'pull_request'
     runs-on: depot-ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           # Need both PR head and base for the diff and the base-CHANGELOG read.
           fetch-depth: 0
@@ -116,7 +116,7 @@ jobs:
     if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
     runs-on: depot-ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           # Full history so we can peel vX.Y.Z to its introduction commit locally.
           fetch-depth: 0
