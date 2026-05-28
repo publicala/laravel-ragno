@@ -6,6 +6,34 @@ The top `## ` header is always the most recent version — `## vX.Y.Z`, exact �
 and that header is the source of truth the release workflow reads. Adding a
 new top block to this file is what cuts a release.
 
+## v0.4.0
+
+### Added
+
+- **HTTPS-only base URL in production.** `RagnoServiceProvider` now requires
+  `ragno_base_url` to be an absolute `https://` URL when
+  `app()->environment('production')` is true. Outside production (local dev,
+  CI, container gateways) `http://` is still accepted — same as v0.3.0. The
+  failure mode is the same `RagnoConfigurationException` raised at connection
+  resolve, before any HTTP request leaves the app.
+- **Token control-character sanitization.** `ragno_token` is now rejected at
+  config time if it contains any byte in `\x00-\x1F` or `\x7F` (CR, LF, TAB,
+  NUL, DEL, etc.). Defense against header injection via a hostile `.env`
+  value when Laravel builds `Authorization: Bearer <token>`. Legitimate
+  Sanctum / PASETO tokens use only printable ASCII and are unaffected. An
+  empty token still resolves the connection so the runtime `missing_token`
+  error keeps surfacing with its friendlier message at query time.
+
+### Notes
+
+- A production deployment with an `http://` `ragno_base_url` will start
+  throwing on first connection resolve. The recommended fix is to switch the
+  URL to `https://` — the gateway has always required TLS on production
+  traffic; this just makes the misconfiguration visible at boot.
+- The validator's error messages now mention scheme and control-character
+  requirements explicitly, so the operator gets actionable feedback in the
+  `RagnoConfigurationException`.
+
 ## v0.3.0
 
 ### Added
