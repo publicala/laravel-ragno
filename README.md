@@ -68,28 +68,6 @@ Then — no version constraint needed:
 composer require publicala/laravel-ragno
 ```
 
-### Authenticating to the private repository
-
-This repository is **private**, so Composer needs a GitHub token to read it.
-One token grants read access to every private `publicala` package, so it
-works as a single shared key across all of the org's projects. Create a
-fine-grained personal access token (a machine or bot account is ideal)
-scoped to the `publicala` org with **Contents: Read-only**, then hand it to
-Composer:
-
-```bash
-# Locally, once, covering every project on the machine:
-composer config --global github-oauth.github.com <TOKEN>
-
-# CI, Laravel Cloud, Vapor, or Forge: set the COMPOSER_AUTH env var instead.
-COMPOSER_AUTH='{"github-oauth":{"github.com":"<TOKEN>"}}'
-```
-
-GitHub Actions' built-in `GITHUB_TOKEN` only reads its own repository, so a
-shared org token (or a GitHub App token) is what lets a workflow pull this
-package. The VCS URL above stays on HTTPS. Composer authenticates with the
-token, so no SSH key is needed.
-
 Composer reads the git tags off the VCS source and writes a semver-safe
 constraint into your `composer.json` for you (a `^0.x` caret while the
 package is on 0.x, then `^1.0` once it tags 1.0), so you always get the
