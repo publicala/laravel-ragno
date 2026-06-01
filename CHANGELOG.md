@@ -6,6 +6,15 @@ The top `## ` header is always the most recent version â€” `## vX.Y.Z`, exact â€
 and that header is the source of truth the release workflow reads. Adding a
 new top block to this file is what cuts a release.
 
+## v0.5.1
+
+### Changed
+
+- **The repository is public.** Installs need no authentication. Removed the
+  private-repository Composer auth instructions from the README. The package
+  is still GitHub VCS only (never Packagist), so the `repositories` entry plus
+  `composer require publicala/laravel-ragno` is all consumers need.
+
 ## v0.5.0
 
 ### Added
