@@ -6,6 +6,24 @@ The top `## ` header is always the most recent version â€” `## vX.Y.Z`, exact â€
 and that header is the source of truth the release workflow reads. Adding a
 new top block to this file is what cuts a release.
 
+## v0.5.0
+
+### Added
+
+- **Private-repository install guide.** The README documents Composer
+  authentication for the GitHub-only distribution. A single fine-grained
+  token, shared across the org, is supplied through `COMPOSER_AUTH` (or
+  `composer config --global github-oauth.github.com`). Covers local
+  machines, GitHub Actions, and Laravel Cloud, Vapor, and Forge.
+
+### Changed
+
+- **Neutral example connection names.** Documentation and tests use
+  `primary` and `analytics` as the illustrative database connections, with
+  `Acme Books` as the sample tenant. No runtime behavior changes. The package
+  never hard-codes a connection name, so existing `config/database.php`
+  entries are unaffected.
+
 ## v0.4.0
 
 ### Added
