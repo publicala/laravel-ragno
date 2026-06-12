@@ -1,119 +1,17 @@
 name: Release
 
-# Cuts a release whenever CHANGELOG.md gains a new `## vX.Y.Z` header on main.
-# Source of truth is the top header; the workflow:
-#   1. Validates the header shape (also runs on PR so format drift fails fast).
-#   2. Guards that PRs touching src/** or composer.json require keys also
-#      bump the CHANGELOG header (monotonic, semver-aware).
-#   3. Per-artifact idempotency: tag and GitHub Release are reconciled
-#      independently, so a partial failure can be repaired by re-running.
-#   4. Extracts the markdown block between the matching version header and
-#      the next `## ` header for release notes.
-#
-# Trigger is path-filtered to CHANGELOG.md so unrelated pushes are a no-op.
-# `workflow_dispatch` is exposed for retroactive releases: the job walks
-# CHANGELOG.md history to find the commit that introduced the current top
-# version and tags THAT commit, regardless of where main's HEAD is. So a
-# release missed at the time of merge can be cut later even after unrelated
-# commits have landed, without loosening the refs/heads/main safety gate.
+# Reusable body for the release cut. The orchestrator (ci.yml) owns the event
+# routing, the needs DAG, the green-CI gate and the ref hard-gate. This file
+# carries only the job body so the orchestrator stays readable. The caller
+# grants contents: write, since a called workflow only receives what the caller
+# grants.
 
 on:
-  push:
-    branches: [main]
-    paths:
-      - 'CHANGELOG.md'
-      - '.github/workflows/release.yml'
-  pull_request:
-    paths:
-      - 'CHANGELOG.md'
-      - 'src/**'
-      - 'composer.json'
-      - '.github/workflows/release.yml'
-  workflow_dispatch:
-
-permissions:
-  contents: write
-
-concurrency:
-  group: release-${{ github.ref }}
-  cancel-in-progress: false
+  workflow_call:
 
 jobs:
-  validate:
-    name: Validate changelog header
-    runs-on: depot-ubuntu-24.04
-    steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-
-      - name: Check top header shape
-        run: |
-          set -euo pipefail
-          header=$(grep -m1 -E '^## ' CHANGELOG.md || true)
-          if [[ -z "$header" ]]; then
-            echo "::error file=CHANGELOG.md::CHANGELOG.md has no '## ' header"
-            exit 1
-          fi
-          if ! [[ "$header" =~ ^##\ v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-            echo "::error file=CHANGELOG.md::Top header must be '## vX.Y.Z' exactly (got: $header)"
-            exit 1
-          fi
-          echo "OK: $header"
-
-  guard-changelog-bump:
-    name: Guard CHANGELOG bump when source changes
-    if: github.event_name == 'pull_request'
-    runs-on: depot-ubuntu-24.04
-    steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-        with:
-          # Need both PR head and base for the diff and the base-CHANGELOG read.
-          fetch-depth: 0
-
-      - name: Check
-        env:
-          BASE_SHA: ${{ github.event.pull_request.base.sha }}
-        run: |
-          set -euo pipefail
-          changed=$(git diff --name-only "$BASE_SHA...HEAD" -- src/ composer.json)
-          if [[ -z "$changed" ]]; then
-            echo "No src/ or composer.json changes in this PR — bump guard not applicable."
-            exit 0
-          fi
-          echo "PR modifies the package surface:"
-          printf '  - %s\n' $changed
-
-          head_version=$(grep -m1 -E '^## v[0-9]+\.[0-9]+\.[0-9]+$' CHANGELOG.md | sed 's/^## v//')
-          # `git show base:CHANGELOG.md` reads the file as it stood on the PR base.
-          base_version=$(git show "$BASE_SHA:CHANGELOG.md" \
-            | grep -m1 -E '^## v[0-9]+\.[0-9]+\.[0-9]+$' \
-            | sed 's/^## v//')
-
-          echo "Top version on base ($BASE_SHA): v$base_version"
-          echo "Top version on PR head:          v$head_version"
-
-          if [[ "$head_version" == "$base_version" ]]; then
-            echo "::error file=CHANGELOG.md::Package surface changed but the top CHANGELOG header is still v$head_version. Add a new '## vX.Y.Z' block at the top of CHANGELOG.md (see the Versioning section at the bottom for the semver rules) so the release workflow can publish your change."
-            exit 1
-          fi
-
-          # Strict monotonic check: head must be strictly greater than base in
-          # semver order. Catches downgrades (`v0.2.1` -> `v0.2.0`) that would
-          # otherwise slip through `head != base`. `sort -V` does the right
-          # thing on plain `X.Y.Z`.
-          newest=$(printf '%s\n%s\n' "$base_version" "$head_version" | sort -V | tail -1)
-          if [[ "$newest" != "$head_version" ]]; then
-            echo "::error file=CHANGELOG.md::Top CHANGELOG version went backwards: base is v$base_version, PR sets v$head_version. The release flow only moves forward — bump the version above v$base_version."
-            exit 1
-          fi
-          echo "OK: bumped v$base_version -> v$head_version"
-
   release:
     name: Cut release
-    needs: validate
-    # Hard-gate to main only. Without the ref check, a maintainer dispatching
-    # the workflow from a feature branch would publish vX.Y.Z from unmerged
-    # code.
-    if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
     runs-on: depot-ubuntu-24.04
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
