@@ -188,6 +188,12 @@ jobs:
   # ruleset never changes when a CI job is renamed or added. Runs on job
   # failure and skip but not when the run is cancelled, so cancelled runs
   # report as cancelled instead of failed.
+  #
+  # `changes` is deliberately NOT in this gate's needs: it is a trigger router
+  # (it only computes path-filter outputs to scope the release family), not an
+  # automated test whose failure should block a merge. The `release` job needs
+  # `changes` solely for its output; the gate aggregates the real test and
+  # validation jobs.
   ci-success:
     if: ${{ !cancelled() }}
     needs: [test, validate, guard-changelog-bump]
@@ -204,16 +210,28 @@ jobs:
 
   release:
     name: Cut release
-    # Wired to the aggregate gate so a red CI run can never publish, plus the
-    # `validate` check it depended on before. `changes` is needed for the
-    # path-scoped push trigger reproduced in the `if` below.
-    needs: [changes, validate, ci-success]
+    # Wired to need the aggregate gate so a red CI run can never publish a
+    # release. `ci-success` reports success only when every CI job it
+    # aggregates passed (or legitimately skipped), and it transitively covers
+    # `validate`, so requiring `ci-success == success` also guarantees the
+    # changelog header validated. `changes` is needed only for its output.
+    needs: [changes, ci-success]
     # Hard-gate to main only. Without the ref check, a maintainer dispatching
     # the workflow from a feature branch would publish vX.Y.Z from unmerged
-    # code. Reproduces the old release workflow's `on.push.paths` scoping (cut
-    # only when CHANGELOG/workflow changed); workflow_dispatch stays unscoped.
+    # code. On push, the old release workflow's `on.push.paths` scoping (cut
+    # only when CHANGELOG/workflow changed) is reproduced through the `changes`
+    # job; dispatch keeps running regardless of paths, as before.
+    #
+    # `!cancelled()` is required so this job is still evaluated when `changes`
+    # is skipped (it only runs on push/pull_request). Without a status function
+    # in the `if`, a skipped dependency would silently skip the release on
+    # workflow_dispatch — a regression versus the old standalone release flow.
+    # The explicit `needs.ci-success.result == 'success'` keeps the green-CI
+    # gate intact under that `!cancelled()` relaxation.
     if: >-
-      github.ref == 'refs/heads/main'
+      !cancelled()
+      && needs.ci-success.result == 'success'
+      && github.ref == 'refs/heads/main'
       && (github.event_name == 'workflow_dispatch'
           || (github.event_name == 'push' && needs.changes.outputs.changelog_or_workflow == 'true'))
     runs-on: depot-ubuntu-24.04
