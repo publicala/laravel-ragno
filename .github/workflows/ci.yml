@@ -60,6 +60,7 @@ jobs:
             changelog_or_workflow:
               - 'CHANGELOG.md'
               - '.github/workflows/ci.yml'
+              - '.github/workflows/release.yml'
             package_surface:
               - 'src/**'
               - 'composer.json'
