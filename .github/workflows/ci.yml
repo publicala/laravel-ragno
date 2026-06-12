@@ -59,8 +59,7 @@ jobs:
           filters: |
             changelog_or_workflow:
               - 'CHANGELOG.md'
-              - '.github/workflows/ci.yml'
-              - '.github/workflows/release.yml'
+              - '.github/workflows/**'
             package_surface:
               - 'src/**'
               - 'composer.json'
@@ -100,23 +99,23 @@ jobs:
   # failure and skip but not when the run is cancelled, so cancelled runs
   # report as cancelled instead of failed.
   #
-  # `changes` is deliberately NOT in this gate's needs: it is a trigger router
-  # (it only computes path-filter outputs to scope the release family), not an
-  # automated test whose failure should block a merge. The `release` job needs
-  # `changes` solely for its output; the gate aggregates the real test and
-  # validation jobs.
+  # `changes` is in this gate's needs even though it is only a trigger router:
+  # if it errors, its dependents (validate, guard-changelog-bump) skip, and a
+  # gate that ignored the router would report green over a red job, letting a
+  # PR merge with failing CI. allowed-skips covers its legitimate event-scoped
+  # skip on workflow_dispatch.
   ci-success:
     if: ${{ !cancelled() }}
-    needs: [test, validate, guard-changelog-bump]
+    needs: [test, changes, validate, guard-changelog-bump]
     runs-on: depot-ubuntu-24.04
     steps:
       - uses: re-actors/alls-green@05ac9388f0aebcb5727afa17fcccfecd6f8ec5fe # v1.2.2
         with:
           # These jobs are path/event scoped, so they legitimately skip on runs
           # that do not touch their paths (or on workflow_dispatch, where the
-          # test matrix does not run). A skip is treated as success; a real
-          # failure still fails the gate.
-          allowed-skips: test, validate, guard-changelog-bump
+          # test matrix and the changes router do not run). A skip is treated
+          # as success. A real failure still fails the gate.
+          allowed-skips: test, changes, validate, guard-changelog-bump
           jobs: ${{ toJSON(needs) }}
 
   release:
