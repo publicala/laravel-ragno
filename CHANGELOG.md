@@ -6,6 +6,21 @@ The top `## ` header is always the most recent version — `## vX.Y.Z`, exact �
 and that header is the source of truth the release workflow reads. Adding a
 new top block to this file is what cuts a release.
 
+## v0.5.2
+
+### Fixed
+
+- **Connections now report their own name.** A `driver=ragno` connection
+  resolved through Laravel's `db.extend` path never had the `name` config key
+  stamped onto it — Laravel only does that inside
+  `ConnectionFactory::parseConfig()`, which the driver-extension path bypasses.
+  As a result `Connection::getName()` returned `null` and every `QueryExecuted`
+  event carried a blank connection name, so the query log, Telescope, Nightwatch
+  and any other `QueryExecuted` consumer showed Ragno reads with no connection.
+  `RagnoServiceProvider` now stamps the connection name onto the config
+  (mirroring `parseConfig()`'s `Arr::add`), so `getName()` and all query events
+  report the configured connection name. No configuration or API change.
+
 ## v0.5.1
 
 ### Changed
