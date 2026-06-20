@@ -12,7 +12,7 @@ new top block to this file is what cuts a release.
 
 - **Connections now report their own name.** A `driver=ragno` connection
   resolved through Laravel's `db.extend` path never had the `name` config key
-  stamped onto it — Laravel only does that inside
+  stamped onto it. Laravel only does that inside
   `ConnectionFactory::parseConfig()`, which the driver-extension path bypasses.
   As a result `Connection::getName()` returned `null` and every `QueryExecuted`
   event carried a blank connection name, so the query log, Telescope, Nightwatch

@@ -19,14 +19,14 @@ it('resolves a RagnoConnection for the ragno driver', function (): void {
 });
 
 it('reports its configured connection name', function (): void {
-    // Laravel stamps the `name` config key only inside ConnectionFactory, which
-    // the db.extend driver path bypasses; without our fix getName() is null.
+    // ConnectionFactory stamps the `name` config key, and the db.extend driver
+    // path bypasses it, so the provider sets the name for getName() to return.
     expect(DB::connection('primary')->getName())->toBe('primary');
 });
 
 it('labels query events with the connection name', function (): void {
-    // The symptom the name fix guards against: a null connectionName makes the
-    // query log, Telescope, Nightwatch, etc. show Ragno reads with no connection.
+    // A null connectionName is what makes the query log, Telescope, Nightwatch,
+    // etc. show Ragno reads with no connection, so assert the event carries it.
     Http::fake(['data.publica.la/*' => Http::response(ragnoEnvelope([]))]);
 
     $connectionNames = [];
