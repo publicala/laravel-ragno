@@ -70,6 +70,13 @@ final class RagnoServiceProvider extends ServiceProvider
             (string) ($config['ragno_user_agent'] ?? $shared['user_agent'] ?? 'laravel-ragno'),
         );
 
+        // Stamp the connection's own name onto its config. Laravel only does
+        // this inside ConnectionFactory::parseConfig() (Arr::add($config,
+        // 'name', $name)), which the `db.extend` driver path bypasses entirely.
+        // Without it Connection::getName() returns null, so every QueryExecuted
+        // event carries a blank connection name (the query log, Telescope and
+        // Nightwatch then show these reads with no connection).
+        $config['name'] ??= $name;
         $config['enforce_read_only'] ??= $shared['enforce_read_only'] ?? true;
         $config['max_rows'] ??= $shared['max_rows'] ?? null;
 

@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use Illuminate\Database\Events\QueryExecuted;
 use Illuminate\Database\MultipleColumnsSelectedException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
@@ -15,6 +16,27 @@ beforeEach(function (): void {
 
 it('resolves a RagnoConnection for the ragno driver', function (): void {
     expect(DB::connection('primary'))->toBeInstanceOf(RagnoConnection::class);
+});
+
+it('reports its configured connection name', function (): void {
+    // ConnectionFactory stamps the `name` config key, and the db.extend driver
+    // path bypasses it, so the provider sets the name for getName() to return.
+    expect(DB::connection('primary')->getName())->toBe('primary');
+});
+
+it('labels query events with the connection name', function (): void {
+    // A null connectionName is what makes the query log, Telescope, Nightwatch,
+    // etc. show Ragno reads with no connection, so assert the event carries it.
+    Http::fake(['data.publica.la/*' => Http::response(ragnoEnvelope([]))]);
+
+    $connectionNames = [];
+    DB::listen(function (QueryExecuted $query) use (&$connectionNames): void {
+        $connectionNames[] = $query->connectionName;
+    });
+
+    DB::connection('primary')->select('select 1');
+
+    expect($connectionNames)->toBe(['primary']);
 });
 
 it('returns rows as stdClass and preserves numeric strings', function (): void {
