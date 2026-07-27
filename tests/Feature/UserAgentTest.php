@@ -5,6 +5,7 @@ declare(strict_types=1);
 use Composer\InstalledVersions;
 use Illuminate\Support\Facades\DB;
 use Publicala\Ragno\Facades\Ragno;
+use Publicala\Ragno\UserAgent;
 
 // What reaches the wire. The composition itself is covered in
 // tests/Unit/UserAgentTest.php; these pin the two values the driver feeds it
@@ -17,13 +18,16 @@ it('sends the driver version and the app name from the environment', function ()
 
     DB::connection('primary')->select('select 1');
 
-    $version = (string) InstalledVersions::getPrettyVersion('publicala/laravel-ragno');
+    $version = InstalledVersions::getPrettyVersion('publicala/laravel-ragno');
 
-    expect($version)->not->toBe('')
-        // Whatever this checkout resolves to (`dev-main` here, `1.2.3` from a
-        // tag) has to reach the header, in the product token's own alphabet.
-        ->and(lastRagnoUserAgent())->toMatch('#^laravel-ragno/[A-Za-z0-9._+~-]+ \(Acme Books\)$#')
-        ->and(lastRagnoUserAgent())->toContain(mb_ltrim($version, 'v'));
+    // Whatever this checkout resolves to has to be the version that reaches the
+    // header, as a product token. The value itself is out of the suite's hands
+    // (`dev-main` here, `dev-<branch>` elsewhere, `1.2.3` from a tag), so assert
+    // against the composition of it rather than restating the token rules, which
+    // tests/Unit/UserAgentTest.php pins on their own.
+    expect($version)->not->toBeNull()
+        ->and(lastRagnoUserAgent())->toBe(UserAgent::compose($version, 'Acme Books'))
+        ->and(lastRagnoUserAgent())->toMatch('#^laravel-ragno/[A-Za-z0-9._+~-]+ \(Acme Books\)$#');
 });
 
 it('drops the comment when the app has no name', function (): void {
