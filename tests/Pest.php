@@ -41,10 +41,26 @@ function ragnoEnvelope(array $data, string $service = 'primary'): array
  */
 function lastRagnoQuery(): string
 {
+    return (string) (lastRagnoRequest()->data()['query'] ?? '');
+}
+
+/**
+ * The `User-Agent` the most recent request carried to the gateway.
+ */
+function lastRagnoUserAgent(): string
+{
+    return (string) (lastRagnoRequest()->header('User-Agent')[0] ?? '');
+}
+
+/**
+ * The most recent request the gateway received.
+ */
+function lastRagnoRequest(): Request
+{
     $pair = Http::recorded()->last();
 
     /** @var Request $request */
     $request = $pair[0];
 
-    return (string) ($request->data()['query'] ?? '');
+    return $request;
 }
