@@ -98,7 +98,7 @@ Per-connection keys (all optional except the token):
 | `ragno_base_url` | `config('ragno.base_url')` | Override the gateway per connection (e.g. staging). |
 | `ragno_timeout` | `30` | Request timeout (seconds). |
 | `ragno_connect_timeout` | `10` | Connect timeout (seconds). |
-| `ragno_user_agent` | `laravel-ragno (<app name>)` | `User-Agent` sent to the gateway (see below). |
+| `ragno_user_agent` | `laravel-ragno/<version> (<app name>)` | `User-Agent` sent to the gateway (see below). |
 | `enforce_read_only` | `true` | Local statement guard (see below). |
 | `max_rows` | `null` | Fail if a result set exceeds this many rows. |
 
@@ -106,13 +106,15 @@ Shared transport defaults (base URL, timeouts, user agent) live in `config/ragno
 
 ### Which app is reading?
 
-Every request identifies both the driver and your app, so the gateway's audit log attributes traffic to something more useful than "a Laravel app":
+Every request identifies the driver, the version it runs, and your app, so the gateway's audit log attributes traffic to something more useful than "a Laravel app":
 
 ```
-User-Agent: laravel-ragno (Acme Books)
+User-Agent: laravel-ragno/0.7.0 (Acme Books)
 ```
 
-The name in parentheses is your `config('app.name')`. To send something else, set `RAGNO_USER_AGENT` (shared) or a connection's `ragno_user_agent` (per service) and that value becomes the whole header:
+The version is whatever Composer installed the package at, read from its runtime metadata: `0.7.0` from a release tag, `dev-main` from a branch. The name in parentheses is your `config('app.name')`.
+
+To send something else, set `RAGNO_USER_AGENT` (shared) or a connection's `ragno_user_agent` (per service) and that value becomes the whole header:
 
 ```dotenv
 RAGNO_USER_AGENT="acme-nightly-export/2.1"

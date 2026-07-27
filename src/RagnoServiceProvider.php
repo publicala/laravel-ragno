@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Publicala\Ragno;
 
+use Composer\InstalledVersions;
 use Illuminate\Contracts\Config\Repository as ConfigRepository;
 use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Database\DatabaseManager;
@@ -11,12 +12,17 @@ use Illuminate\Http\Client\Factory as HttpFactory;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\ServiceProvider;
-use Illuminate\Support\Str;
 use Publicala\Ragno\Console\PingCommand;
 use Publicala\Ragno\Exceptions\RagnoConfigurationException;
 
 final class RagnoServiceProvider extends ServiceProvider
 {
+    /**
+     * The package Composer knows this driver by, used to read back the version
+     * it was installed at.
+     */
+    private const string PACKAGE = 'publicala/laravel-ragno';
+
     public function register(): void
     {
         $this->mergeConfigFrom(__DIR__.'/../config/ragno.php', 'ragno');
@@ -92,11 +98,12 @@ final class RagnoServiceProvider extends ServiceProvider
     /**
      * The `User-Agent` every request on this connection carries.
      *
-     * The gateway's audit log attributes traffic by what it is told, and
-     * "laravel-ragno" alone says only that some Laravel app made the read. The
-     * default carries the app's own name alongside the driver's, e.g.
-     * `laravel-ragno (Acme Books)`. A `ragno_user_agent` on the connection, or
-     * `RAGNO_USER_AGENT` shared across them, replaces the whole header.
+     * The default names the driver, the version it runs, and the app, e.g.
+     * `laravel-ragno/0.7.0 (Acme Books)`, so the gateway's audit log attributes
+     * the read to something more useful than "a Laravel app". See
+     * {@see UserAgent} for how the two are composed. A `ragno_user_agent` on the
+     * connection, or `RAGNO_USER_AGENT` shared across them, replaces the whole
+     * header.
      *
      * @param  array<string, mixed>  $config
      * @param  array<string, mixed>  $shared
@@ -109,29 +116,22 @@ final class RagnoServiceProvider extends ServiceProvider
             return $configured;
         }
 
-        $appName = $this->appName();
-
-        return $appName === '' ? 'laravel-ragno' : "laravel-ragno ({$appName})";
+        return UserAgent::compose($this->driverVersion(), $this->appName());
     }
 
     /**
-     * The app's own name, scrubbed for a request header.
-     *
-     * `app.name` is free text and a header value accepts neither control bytes
-     * nor DEL, so an `APP_NAME` carrying one would make the HTTP client reject
-     * every query outright. Parens go too, along with the backslash that escapes
-     * one: either can end the comment somewhere the app never intended (a
-     * trailing `\` escapes the closing paren and leaves it unterminated). A long
-     * name is clipped rather than sent whole.
+     * The version Composer installed this driver at, or null when its runtime
+     * metadata has no entry for the package (vendored without Composer, or a
+     * loader registered from somewhere else).
      */
+    private function driverVersion(): ?string
+    {
+        return InstalledVersions::isInstalled(self::PACKAGE) ? InstalledVersions::getPrettyVersion(self::PACKAGE) : null;
+    }
+
     private function appName(): string
     {
-        $name = (string) $this->app->make(ConfigRepository::class)->get('app.name', '');
-
-        return (string) Str::of($name)
-            ->replaceMatches('/[\x00-\x1F\x7F()\\\\]+/', ' ')
-            ->squish()
-            ->limit(64, '');
+        return (string) $this->app->make(ConfigRepository::class)->get('app.name', '');
     }
 
     /**

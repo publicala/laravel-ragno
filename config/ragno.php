@@ -31,8 +31,8 @@ return [
     |--------------------------------------------------------------------------
     |
     | Sent on every request so the gateway's audit log can attribute traffic to
-    | this app. Left unset, the driver sends the package name plus your app's
-    | own `app.name`, e.g. `laravel-ragno (Acme Books)`. Set this (or a
+    | this app. Left unset, the driver sends its own name and version plus your
+    | app's `app.name`, e.g. `laravel-ragno/0.7.0 (Acme Books)`. Set this (or a
     | per-connection `ragno_user_agent`) to own the header verbatim.
     |
     */
