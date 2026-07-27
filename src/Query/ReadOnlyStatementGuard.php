@@ -143,7 +143,7 @@ final class ReadOnlyStatementGuard
     {
         if ($sql[$i] === '/') {
             $i += 2;
-            while (isset($sql[$i]) && ! ($sql[$i] === '*' && ($sql[$i + 1] ?? '') === '/')) {
+            while (isset($sql[$i]) && ($sql[$i] !== '*' || ($sql[$i + 1] ?? '') !== '/')) {
                 $i++;
             }
 
