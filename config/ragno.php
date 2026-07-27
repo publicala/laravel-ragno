@@ -30,12 +30,14 @@ return [
     | User agent
     |--------------------------------------------------------------------------
     |
-    | Sent on every request so the gateway's audit log can attribute traffic
-    | to this app. Override per-connection with `ragno_user_agent`.
+    | Sent on every request so the gateway's audit log can attribute traffic to
+    | this app. Left unset, the driver sends the package name plus your app's
+    | own `app.name`, e.g. `laravel-ragno (Acme Books)`. Set this (or a
+    | per-connection `ragno_user_agent`) to own the header verbatim.
     |
     */
 
-    'user_agent' => env('RAGNO_USER_AGENT', 'laravel-ragno'),
+    'user_agent' => env('RAGNO_USER_AGENT'),
 
     /*
     |--------------------------------------------------------------------------

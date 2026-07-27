@@ -11,6 +11,7 @@ use Illuminate\Http\Client\Factory as HttpFactory;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\ServiceProvider;
+use Illuminate\Support\Str;
 use Publicala\Ragno\Console\PingCommand;
 use Publicala\Ragno\Exceptions\RagnoConfigurationException;
 
@@ -67,7 +68,7 @@ final class RagnoServiceProvider extends ServiceProvider
             $token,
             (int) ($config['ragno_timeout'] ?? $shared['timeout'] ?? 30),
             (int) ($config['ragno_connect_timeout'] ?? $shared['connect_timeout'] ?? 10),
-            (string) ($config['ragno_user_agent'] ?? $shared['user_agent'] ?? 'laravel-ragno'),
+            $this->userAgent($config, $shared),
         );
 
         // Stamp the connection's own name onto its config. Laravel only does
@@ -86,6 +87,49 @@ final class RagnoServiceProvider extends ServiceProvider
             (string) ($config['prefix'] ?? ''),
             $config,
         );
+    }
+
+    /**
+     * The `User-Agent` every request on this connection carries.
+     *
+     * The gateway's audit log attributes traffic by what it is told, and
+     * "laravel-ragno" alone says only that some Laravel app made the read. The
+     * default carries the app's own name alongside the driver's, e.g.
+     * `laravel-ragno (Acme Books)`. A `ragno_user_agent` on the connection, or
+     * `RAGNO_USER_AGENT` shared across them, replaces the whole header.
+     *
+     * @param  array<string, mixed>  $config
+     * @param  array<string, mixed>  $shared
+     */
+    private function userAgent(array $config, array $shared): string
+    {
+        $configured = $config['ragno_user_agent'] ?? $shared['user_agent'] ?? null;
+
+        if (is_string($configured) && $configured !== '') {
+            return $configured;
+        }
+
+        $appName = $this->appName();
+
+        return $appName === '' ? 'laravel-ragno' : "laravel-ragno ({$appName})";
+    }
+
+    /**
+     * The app's own name, scrubbed for a request header.
+     *
+     * `app.name` is free text and a header value accepts neither control bytes
+     * nor DEL, so an `APP_NAME` carrying one would make the HTTP client reject
+     * every query outright. Parens go too (they would close the comment early),
+     * and a long name is clipped rather than sent whole.
+     */
+    private function appName(): string
+    {
+        $name = (string) $this->app->make(ConfigRepository::class)->get('app.name', '');
+
+        return (string) Str::of($name)
+            ->replaceMatches('/[\x00-\x1F\x7F()]+/', ' ')
+            ->squish()
+            ->limit(64, '');
     }
 
     /**
