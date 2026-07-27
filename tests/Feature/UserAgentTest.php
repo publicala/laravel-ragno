@@ -58,7 +58,8 @@ it('lets a per-connection user agent win over the shared one', function (): void
 });
 
 // `APP_NAME` is free text. A control byte in a header value makes the HTTP
-// client reject the request, and a paren of its own closes the comment early.
+// client reject the request, and a paren (or the backslash that escapes one)
+// ends the comment somewhere the app never intended.
 
 it('scrubs an app name that would corrupt the header', function (string $appName, string $expected): void {
     config()->set('app.name', $appName);
@@ -74,6 +75,8 @@ it('scrubs an app name that would corrupt the header', function (string $appName
     'DEL' => ["Acme\x7FBooks", 'laravel-ragno (Acme Books)'],
     'tabs and runs of spaces' => ["  Acme\t\t Books  ", 'laravel-ragno (Acme Books)'],
     'parens of its own' => ['Acme (Books)', 'laravel-ragno (Acme Books)'],
+    'trailing backslash' => ['Acme\\', 'laravel-ragno (Acme)'],
+    'backslash escaping a paren' => ['Acme \\) Books', 'laravel-ragno (Acme Books)'],
     'nothing but control bytes' => ["\r\n\t", 'laravel-ragno'],
     'non-ascii survives' => ['Acme Böcker', 'laravel-ragno (Acme Böcker)'],
 ]);

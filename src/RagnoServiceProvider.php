@@ -119,15 +119,17 @@ final class RagnoServiceProvider extends ServiceProvider
      *
      * `app.name` is free text and a header value accepts neither control bytes
      * nor DEL, so an `APP_NAME` carrying one would make the HTTP client reject
-     * every query outright. Parens go too (they would close the comment early),
-     * and a long name is clipped rather than sent whole.
+     * every query outright. Parens go too, along with the backslash that escapes
+     * one: either can end the comment somewhere the app never intended (a
+     * trailing `\` escapes the closing paren and leaves it unterminated). A long
+     * name is clipped rather than sent whole.
      */
     private function appName(): string
     {
         $name = (string) $this->app->make(ConfigRepository::class)->get('app.name', '');
 
         return (string) Str::of($name)
-            ->replaceMatches('/[\x00-\x1F\x7F()]+/', ' ')
+            ->replaceMatches('/[\x00-\x1F\x7F()\\\\]+/', ' ')
             ->squish()
             ->limit(64, '');
     }

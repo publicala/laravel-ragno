@@ -13,9 +13,9 @@ new top block to this file is what cuts a release.
 - **The `User-Agent` names your app.** Requests went out as plain
   `laravel-ragno`, which told the gateway's audit log only that some Laravel app
   made the read. The default now carries `config('app.name')` alongside the
-  driver's name, e.g. `laravel-ragno (Acme Books)`. Control bytes and parens are
-  stripped from the app name (it lands verbatim in a request header) and it is
-  clipped at 64 characters. `RAGNO_USER_AGENT` and a per-connection
+  driver's name, e.g. `laravel-ragno (Acme Books)`. The app name lands verbatim
+  in a request header, so control bytes, parens, and backslashes are stripped
+  from it and it is clipped at 64 characters. `RAGNO_USER_AGENT` and a per-connection
   `ragno_user_agent` still replace the whole header, unchanged. If you published
   `config/ragno.php` before this release, drop the `'laravel-ragno'` default from
   its `user_agent` line (`env('RAGNO_USER_AGENT')`) to pick the app name up.
