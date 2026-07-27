@@ -6,6 +6,32 @@ The top `## ` header is always the most recent version â€” `## vX.Y.Z`, exact â€
 and that header is the source of truth the release workflow reads. Adding a
 new top block to this file is what cuts a release.
 
+## v0.7.0
+
+### Changed
+
+- **The `User-Agent` names the driver's version.** The default header was
+  `laravel-ragno (Acme Books)`, which left the gateway unable to tell which
+  driver version a client runs. It now leads with a product token carrying the
+  version Composer installed the package at, read from Composer's runtime
+  metadata: `laravel-ragno/0.7.0 (Acme Books)` from a release tag,
+  `laravel-ragno/dev-main (...)` from a branch, and the bare `laravel-ragno` when
+  no version can be determined. `RAGNO_USER_AGENT` and a per-connection
+  `ragno_user_agent` still replace the whole header, unchanged.
+- **`composer-runtime-api` is a declared requirement.** Reading the installed
+  version uses `Composer\InstalledVersions`, so `^2.0` is now required
+  explicitly. Composer 2 has shipped it since 2020 and Composer 1 cannot install
+  this package's PHP requirement anyway, so no install that works today breaks.
+
+### Added
+
+- **`Publicala\Ragno\UserAgent`.** Header composition moved out of the service
+  provider into one class that takes a version and an app name and returns the
+  header. Scrubbing lives there: a version is reduced to a product token's
+  alphabet (the `v` on a tag goes, as do the characters git allows in a branch
+  name but a token does not), and an app name keeps its comment intact (control
+  bytes, DEL, parens, and backslashes stripped, clipped at 64 characters).
+
 ## v0.6.0
 
 ### Changed
