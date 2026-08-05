@@ -19,13 +19,7 @@ pre-commit:
       glob: "*.php"
       stage_fixed: true
 
-pre-push:
-  parallel: true
-  commands:
-    "analyze:php":
-      run: ./vendor/bin/phpstan analyse --memory-limit=512M
-      glob: "{src,config}/**/*.php"
-    "test:type-coverage":
-      run: ./vendor/bin/pest --type-coverage --min=100
-    "test:unit":
-      run: ./vendor/bin/pest
+# No pre-push hook: PHPStan, type coverage, and the test suite run in CI behind
+# the required gate, so a pre-push pass would duplicate that enforcement while
+# adding push latency and hard-failing in environments without dev dependencies
+# installed.
