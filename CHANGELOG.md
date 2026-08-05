@@ -6,6 +6,14 @@ The top `## ` header is always the most recent version â€” `## vX.Y.Z`, exact â€
 and that header is the source of truth the release workflow reads. Adding a
 new top block to this file is what cuts a release.
 
+## v0.7.1
+
+### Changed
+
+- **Pest 5 in the dev toolchain.** `pestphp/pest` and `pestphp/pest-plugin-type-coverage` accept `^4.0|^5.0`, so the Laravel 13 matrix leg resolves Pest 5 (PHPUnit 13) while the Laravel 12 leg stays on Pest 4. The remaining dev-tool constraints reference bare majors.
+- **CI checks out with `actions/checkout` v7** (pinned at v7.0.1).
+- **The pre-push hook is gone.** PHPStan, type coverage, and the test suite run in CI behind the required gate. The local pre-push pass duplicated that enforcement, added push latency, and hard-failed in environments without dev dependencies installed. Pre-commit formatting hooks are unchanged.
+
 ## v0.7.0
 
 ### Changed

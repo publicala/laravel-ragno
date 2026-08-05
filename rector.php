@@ -3,7 +3,6 @@
 declare(strict_types=1);
 
 use Rector\Caching\ValueObject\Storage\FileCacheStorage;
-use Rector\CodingStyle\Rector\Encapsed\EncapsedStringsToSprintfRector;
 use Rector\Config\RectorConfig;
 use Rector\Php83\Rector\ClassMethod\AddOverrideAttributeToOverriddenMethodsRector;
 use RectorLaravel\Set\LaravelSetList;
@@ -35,8 +34,6 @@ return RectorConfig::configure()
         // We override many Illuminate\Database\Connection methods; the
         // #[\Override] attribute is noise here and matches the org baseline.
         AddOverrideAttributeToOverriddenMethodsRector::class,
-        // Keep readable interpolation ("Checking {$name}...") over sprintf().
-        EncapsedStringsToSprintfRector::class,
         // The following property-to-attribute rules emit Laravel-13-only
         // attributes (Illuminate\Console\Attributes\* and
         // Illuminate\Database\Eloquent\Attributes\Connection / Table /
