@@ -27,7 +27,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Setup PHP (static + pcov)
-        uses: publicala/php-ci-static@a5c8319fbd0616bd8a707464f1b755e63aa31bed # v1
+        uses: publicala/php-ci-static@29d4e0be245cdf5b9f64af978fbe509e5cd38137 # v1
         with:
           php-version: ${{ matrix.php }}
           coverage: pcov
