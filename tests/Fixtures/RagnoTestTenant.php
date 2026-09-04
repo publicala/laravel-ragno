@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Publicala\Ragno\Tests\Fixtures;
 
+use Illuminate\Database\Eloquent\Attributes\Unguarded;
 use Illuminate\Database\Eloquent\Model;
 
 /**
@@ -13,6 +14,7 @@ use Illuminate\Database\Eloquent\Model;
  * @property int $id
  * @property string $name
  */
+#[Unguarded]
 final class RagnoTestTenant extends Model
 {
     public $timestamps = false;
@@ -20,8 +22,6 @@ final class RagnoTestTenant extends Model
     protected $connection = 'primary';
 
     protected $table = 'tenants';
-
-    protected $guarded = [];
 
     /**
      * @return array<string, string>

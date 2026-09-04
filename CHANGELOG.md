@@ -2,9 +2,16 @@
 
 All notable changes to `publicala/laravel-ragno`.
 
-The top `## ` header is always the most recent version — `## vX.Y.Z`, exact —
+The top `## ` header is always the most recent version  `## vX.Y.Z`, exact 
 and that header is the source of truth the release workflow reads. Adding a
 new top block to this file is what cuts a release.
+
+## v0.7.2
+
+### Changed
+
+- **PHPStan 2.2.13 in the development toolchain.** The package requires PHPStan 2.2.13 directly for faster analysis and consistent dependency resolution.
+- **Laravel 13 test fixture uses the `Unguarded` attribute.** This is the Laravel 13 equivalent of an empty `$guarded` property and keeps the full CI matrix clean.
 
 ## v0.7.1
 
@@ -103,7 +110,7 @@ new top block to this file is what cuts a release.
 - **HTTPS-only base URL in production.** `RagnoServiceProvider` now requires
   `ragno_base_url` to be an absolute `https://` URL when
   `app()->environment('production')` is true. Outside production (local dev,
-  CI, container gateways) `http://` is still accepted — same as v0.3.0. The
+  CI, container gateways) `http://` is still accepted  same as v0.3.0. The
   failure mode is the same `RagnoConfigurationException` raised at connection
   resolve, before any HTTP request leaves the app.
 - **Token control-character sanitization.** `ragno_token` is now rejected at
@@ -118,7 +125,7 @@ new top block to this file is what cuts a release.
 
 - A production deployment with an `http://` `ragno_base_url` will start
   throwing on first connection resolve. The recommended fix is to switch the
-  URL to `https://` — the gateway has always required TLS on production
+  URL to `https://`  the gateway has always required TLS on production
   traffic; this just makes the misconfiguration visible at boot.
 - The validator's error messages now mention scheme and control-character
   requirements explicitly, so the operator gets actionable feedback in the
@@ -128,7 +135,7 @@ new top block to this file is what cuts a release.
 
 ### Added
 
-- `RagnoConfigurationException` — thrown the first time a misconfigured
+- `RagnoConfigurationException`  thrown the first time a misconfigured
   `driver=ragno` connection is resolved, before any HTTP request leaves the
   app. Carries the connection name and the validator's reasons.
 - `RagnoServiceProvider` now validates each connection's `ragno_service` and
@@ -186,7 +193,7 @@ coverage-oriented refactors:
 - `ragno` database driver: a read-only `RagnoConnection` that routes
   Eloquent / query-builder / raw reads through the Ragno SQL-over-HTTP
   gateway.
-- `RagnoClient` — bearer-authenticated HTTP client for one service; maps the
+- `RagnoClient`  bearer-authenticated HTTP client for one service; maps the
   error envelope (with `request_id` / `X-Request-Id` fallback) and preserves
   the underlying transport exception.
 - Read-only enforcement: writes, transactions, and non-read statements throw
@@ -202,10 +209,10 @@ coverage-oriented refactors:
 
 Semver, on `## vX.Y.Z` exactly (no suffixes, no `[Unreleased]`).
 
-- **Patch (`vX.Y.Z+1`)** — bug fixes, internal refactors, docs, dev-tooling
+- **Patch (`vX.Y.Z+1`)**  bug fixes, internal refactors, docs, dev-tooling
   tweaks. No behavioural change for consumers.
-- **Minor (`vX.Y+1.0`)** — additive features (new public methods, new config
+- **Minor (`vX.Y+1.0`)**  additive features (new public methods, new config
   keys with safe defaults, new artisan commands). No breaking change.
-- **Major (`vX+1.0.0`)** — breaking changes: removed or renamed public API,
+- **Major (`vX+1.0.0`)**  breaking changes: removed or renamed public API,
   changed default behaviour that could surprise consumers, dropped Laravel
   or PHP versions.
