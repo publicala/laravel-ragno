@@ -6,6 +6,12 @@ The top `## ` header is always the most recent version  `## vX.Y.Z`, exact 
 and that header is the source of truth the release workflow reads. Adding a
 new top block to this file is what cuts a release.
 
+## v0.7.3
+
+### Changed
+
+- **PHPStan 2.3 and Larastan 3.10 in the development toolchain.** The package requires `phpstan/phpstan:^2.3` and `larastan/larastan:^3.10`, the lowest Larastan that runs on PHPStan 2.3. Both are development dependencies, so applications that install the package resolve nothing new.
+
 ## v0.7.2
 
 ### Changed
