@@ -28,9 +28,9 @@ jobs:
           # PR branched, which both fails innocent PRs (main's src/ change
           # attributed to the PR) and lets main's merged-in version bump mask a
           # missing one in the PR itself.
-          changed=$(git diff --name-only "$BASE_SHA...$HEAD_SHA" -- src/ composer.json)
+          changed=$(git diff --name-only "$BASE_SHA...$HEAD_SHA" -- src/ config/ composer.json)
           if [[ -z "$changed" ]]; then
-            echo "No src/ or composer.json changes in this PR — bump guard not applicable."
+            echo "No src/, config/ or composer.json changes in this PR: bump guard not applicable."
             exit 0
           fi
           echo "PR modifies the package surface:"
