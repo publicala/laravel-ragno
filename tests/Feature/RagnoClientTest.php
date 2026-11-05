@@ -49,7 +49,7 @@ it('maps an error envelope to a RagnoQueryException with code, request_id and st
 
 it('wraps a transport failure as transport_error, preserving the previous exception', function (): void {
     $http = new Factory;
-    $http->fake(fn () => throw new ConnectionException('boom'));
+    $http->fake(fn (): never => throw new ConnectionException('boom'));
 
     $thrown = null;
     try {
