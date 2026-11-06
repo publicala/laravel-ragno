@@ -55,10 +55,8 @@ final readonly class RagnoClient
             );
         }
 
-        $url = mb_rtrim($this->baseUrl, '/').'/api/v1/db/'.$this->service.'/query';
-
         try {
-            $response = $this->request()->post($url, ['query' => $sql]);
+            $response = $this->request()->post($this->queryUrl(), ['query' => $sql]);
         } catch (Throwable $throwable) {
             throw new RagnoQueryException(
                 "Ragno request to service [{$this->service}] failed: ".$throwable->getMessage(),
@@ -96,6 +94,14 @@ final readonly class RagnoClient
         }
 
         return $objects;
+    }
+
+    /**
+     * The gateway endpoint every statement on this service is posted to.
+     */
+    public function queryUrl(): string
+    {
+        return mb_rtrim($this->baseUrl, '/').'/api/v1/db/'.$this->service.'/query';
     }
 
     /**

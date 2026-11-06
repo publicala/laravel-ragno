@@ -16,6 +16,11 @@ function ragnoClient(Factory $http, string $token = 'tok'): RagnoClient
     return new RagnoClient($http, 'https://data.publica.la', 'primary', $token);
 }
 
+it('posts to the service query endpoint under its base URL', function (string $baseUrl): void {
+    expect(new RagnoClient(new Factory, $baseUrl, 'analytics', 'tok')->queryUrl())
+        ->toBe('https://gateway.acme.test/api/v1/db/analytics/query');
+})->with(['https://gateway.acme.test', 'https://gateway.acme.test/']);
+
 it('parses a success envelope into stdClass rows', function (): void {
     $http = new Factory;
     $http->fake(['*' => $http->response(ragnoEnvelope([['id' => '1', 'n' => 'x']]))]);
