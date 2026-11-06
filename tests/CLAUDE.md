@@ -7,11 +7,11 @@ Pest v4. **`it()` syntax only**, never class-based PHPUnit. Every test file decl
 | Dir | What lives here |
 | --- | --- |
 | `Arch/` | Architecture rules: strict types everywhere, final classes, no `dd/dump/var_dump`, exceptions are throwable. |
-| `Feature/` | Driver behaviour through Laravel: `RagnoConnection`, `RagnoClient`, the read-only enforcement, inline-bindings golden tests, the `Ragno` facade fakes, `ragno:ping`, and the request_id helper. |
+| `Feature/` | Driver behaviour through Laravel: `RagnoConnection`, `RagnoClient`, the read-only enforcement, inline-bindings golden tests, the `Ragno` facade fakes, `ragno:ping`, the request_id helper, and the Nightwatch outgoing-request filter. |
 | `Unit/` | Pure logic with no framework: the `ReadOnlyStatementGuard` scanner. |
 | `Fixtures/` | Throwaway Eloquent models / helpers shared across tests. |
 | `Pest.php` | Global config (see below). |
-| `TestCase.php` | Orchestra Testbench harness; defines the default `primary` connection. |
+| `TestCase.php` | Orchestra Testbench harness; registers Nightwatch (disabled by `NIGHTWATCH_ENABLED=false` in `phpunit.xml.dist`) and defines the default `primary` connection. |
 
 ## Global behaviour (`tests/Pest.php`)
 

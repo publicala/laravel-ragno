@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Publicala\Ragno;
 
 use Composer\InstalledVersions;
+use GuzzleHttp\Psr7\Uri;
 use Illuminate\Contracts\Config\Repository as ConfigRepository;
 use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Database\DatabaseManager;
@@ -12,6 +13,9 @@ use Illuminate\Http\Client\Factory as HttpFactory;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\ServiceProvider;
+use Laravel\Nightwatch\Core;
+use Laravel\Nightwatch\Facades\Nightwatch;
+use Laravel\Nightwatch\Records\OutgoingRequest;
 use Publicala\Ragno\Console\PingCommand;
 use Publicala\Ragno\Exceptions\RagnoConfigurationException;
 
@@ -22,6 +26,14 @@ final class RagnoServiceProvider extends ServiceProvider
      * it was installed at.
      */
     private const string PACKAGE = 'publicala/laravel-ragno';
+
+    /**
+     * The query endpoint of every connection resolved so far, spelled the way
+     * Nightwatch records an outgoing request's URL.
+     *
+     * @var array<string, true>
+     */
+    private array $queryUrls = [];
 
     public function register(): void
     {
@@ -48,6 +60,28 @@ final class RagnoServiceProvider extends ServiceProvider
 
             $this->commands([PingCommand::class]);
         }
+
+        $this->rejectSuccessfulGatewayRequestsFromNightwatch();
+    }
+
+    /**
+     * Keep the driver's successful gateway calls out of Nightwatch. A
+     * connection posts every statement from inside a query, so Nightwatch
+     * already records the read as a query event with its SQL and duration,
+     * and the outgoing request would be a second event for the same read. A
+     * failed call records no query, so a response outside 2xx is kept for its
+     * status code.
+     */
+    private function rejectSuccessfulGatewayRequestsFromNightwatch(): void
+    {
+        if (! $this->app->bound(Core::class)) {
+            return;
+        }
+
+        Nightwatch::rejectOutgoingRequests(fn (OutgoingRequest $request): bool => $request->method === 'POST'
+            && $request->statusCode >= 200
+            && $request->statusCode < 300
+            && isset($this->queryUrls[$request->url]));
     }
 
     /**
@@ -76,6 +110,8 @@ final class RagnoServiceProvider extends ServiceProvider
             (int) ($config['ragno_connect_timeout'] ?? $shared['connect_timeout'] ?? 10),
             $this->userAgent($config, $shared),
         );
+
+        $this->queryUrls[(string) new Uri($client->queryUrl())->withUserInfo('')] = true;
 
         // Stamp the connection's own name onto its config. Laravel only does
         // this inside ConnectionFactory::parseConfig() (Arr::add($config,

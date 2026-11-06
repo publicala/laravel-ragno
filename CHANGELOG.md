@@ -6,6 +6,17 @@ The top `## ` header is always the most recent version  `## vX.Y.Z`, exact 
 and that header is the source of truth the release workflow reads. Adding a
 new top block to this file is what cuts a release.
 
+## v0.8.0
+
+### Changed
+
+- **Successful gateway calls stay out of Nightwatch.** Nightwatch recorded every read twice: as the query event the connection raises around the call, and as the outgoing HTTP request to the gateway. When the app runs Nightwatch, the driver rejects the outgoing request record of each 2xx POST to a resolved connection's query endpoint, so a read is one event. A failed call raises no query event, so its outgoing request is kept with the status code. Other outgoing requests are untouched, and apps without Nightwatch see no change. The app's query filtering (`Nightwatch::rejectQueries()`, `NIGHTWATCH_IGNORE_QUERIES`) now decides whether a successful read is recorded at all.
+- **Conflicts with `laravel/nightwatch` below 1.15.1.** Earlier releases hold a single outgoing-request reject callback, so the driver's would replace the app's own. Apps on an older Nightwatch update it alongside this release.
+
+### Added
+
+- **`RagnoClient::queryUrl()`** returns the gateway endpoint the client posts its statements to.
+
 ## v0.7.3
 
 ### Changed

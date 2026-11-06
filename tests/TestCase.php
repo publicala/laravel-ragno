@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Publicala\Ragno\Tests;
 
 use Illuminate\Contracts\Config\Repository;
+use Laravel\Nightwatch\NightwatchServiceProvider;
 use Orchestra\Testbench\TestCase as Orchestra;
 use Publicala\Ragno\RagnoServiceProvider;
 
@@ -15,7 +16,7 @@ abstract class TestCase extends Orchestra
      */
     protected function getPackageProviders($app): array
     {
-        return [RagnoServiceProvider::class];
+        return [NightwatchServiceProvider::class, RagnoServiceProvider::class];
     }
 
     protected function defineEnvironment($app): void

@@ -178,6 +178,12 @@ try {
 }
 ```
 
+### Nightwatch
+
+A read reaches Nightwatch as a query event: the connection posts the statement from inside Laravel's query pipeline, so the event carries the SQL and the gateway round trip. When the app runs Nightwatch, the driver rejects the outgoing request record of every successful (2xx) gateway call, so a read is one event, not two. A failed call raises no query event and keeps its outgoing request, with the status code.
+
+The app's query filtering applies to Ragno reads: a `Nightwatch::rejectQueries()` sampler or `NIGHTWATCH_IGNORE_QUERIES=true` decides whether a successful read is recorded at all.
+
 ## Testing
 
 The driver speaks HTTP, so `Http::fake()` already intercepts it. `Ragno::fake()` is sugar that spells the gateway's URL and envelope for you:
