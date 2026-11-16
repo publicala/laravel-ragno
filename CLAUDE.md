@@ -22,4 +22,4 @@ When in doubt, use `Acme`. A generic database driver never needs a real name any
 
 - Tests are Pest `it()` only. See `tests/CLAUDE.md`.
 - Releases are CHANGELOG-driven. Adding a new top `## vX.Y.Z` header to `CHANGELOG.md` on `main` is what cuts the tag and release.
-- Distribution is GitHub VCS only, never Packagist. See the README install section.
+- Packagist distributes the package and updates on every push through the GitHub hook. Apps install it with no `repositories` entry.
